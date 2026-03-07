@@ -1,0 +1,21 @@
+# Real-time Voice Translation Pipeline Requirements
+# Target Python 3.11
+
+# Audio capture and playback
+sounddevice>=0.4.6
+
+# Numerical computing
+numpy>=1.24.0
+
+# AsyncIO (included in Python 3.11 standard library, listed for clarity)
+# asyncio>=3.11
+
+# WebSocket client/server
+websockets>=12.0
+
+# Async HTTP client
+aiohttp>=3.9.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
