@@ -1,23 +1,27 @@
 import asyncio
 
-
-async def test1():
-    print("Task 1 started")
-    while True:
-        await asyncio.sleep(1)
-
-
-async def test2():
-    print("Task 2 started")
-    while True:
-        await asyncio.sleep(1)
+from app.audio.capture import capture_audio
+from app.audio.playback import playback_audio
+from app.stt.stt_stream import streaming_stt
 
 
 async def main():
 
     print("Audio pipeline started...")
 
+    audio_queue = asyncio.Queue(maxsize=50)
+    text_queue = asyncio.Queue()
+
+    loop = asyncio.get_running_loop()
+
     await asyncio.gather(
-        test1(),
-        test2(),
+
+        # run capture in background thread
+        loop.run_in_executor(None, capture_audio, audio_queue),
+
+        # STT task
+        streaming_stt(audio_queue, text_queue),
+
+        # playback task
+        playback_audio(audio_queue),
     )
