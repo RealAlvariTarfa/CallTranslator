@@ -12,16 +12,20 @@ async def main():
     audio_queue = asyncio.Queue(maxsize=50)
     text_queue = asyncio.Queue()
 
-    loop = asyncio.get_running_loop()
+    capture_task = asyncio.create_task(
+        capture_audio(audio_queue)
+    )
+
+    stt_task = asyncio.create_task(
+        streaming_stt(audio_queue, text_queue)
+    )
+
+    playback_task = asyncio.create_task(
+        playback_audio(audio_queue)
+    )
 
     await asyncio.gather(
-
-        # run capture in background thread
-        loop.run_in_executor(None, capture_audio, audio_queue),
-
-        # STT task
-        streaming_stt(audio_queue, text_queue),
-
-        # playback task
-        playback_audio(audio_queue),
+        capture_task,
+        stt_task,
+        playback_task,
     )
