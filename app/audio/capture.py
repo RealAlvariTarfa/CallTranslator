@@ -44,7 +44,9 @@ async def capture_audio(queue: asyncio.Queue) -> None:
         """
         if status:
             print(f"Audio capture status: {status}")
-        
+        queue.put_nowait(indata.copy())
+
+        print("Audio chunk captured")
         # Convert to PCM16 format (int16)
         # indata shape: (frames, channels), dtype: float32
         # Scale from [-1.0, 1.0] to int16 range
