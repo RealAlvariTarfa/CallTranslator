@@ -18,61 +18,32 @@ CHUNK_SAMPLES = int(SAMPLE_RATE * CHUNK_DURATION_MS / 1000)  # 320 samples
 
 
 async def capture_audio(queue: asyncio.Queue) -> None:
-    """
-    Capture audio from microphone and push chunks to asyncio queue.
-    
-    This function starts a non-blocking InputStream using sounddevice's
-    callback mechanism, ensuring the asyncio event loop is not blocked.
-    Audio is converted to PCM16 format before being put into the queue.
-    
-    Args:
-        queue: An asyncio.Queue to push audio chunks into.
-              Each chunk is a bytes object containing PCM16 audio data.
-    
-    Returns:
-        None - runs indefinitely until stopped.
-    """
+
+    print("Microphone capture starting...")
+
     loop = asyncio.get_running_loop()
-    stream_started = asyncio.Event()
-    
-    def callback(indata: np.ndarray, frames: int, time_info, status: sd.CallbackFlags) -> None:
-        """
-        Sounddevice callback function called for each audio chunk.
-        
-        This callback runs in a separate thread, so we use loop.call_soon_threadsafe
-        to safely put data into the asyncio queue.
-        """
+
+    def callback(indata, frames, time, status):
         if status:
-            print(f"Audio capture status: {status}")
-        queue.put_nowait(indata.copy())
+            print(status)
+
+        audio = indata.copy()
+
+        # Send audio safely from the audio thread to asyncio
+        loop.call_soon_threadsafe(queue.put_nowait, audio)
 
         print("Audio chunk captured")
-        # Convert to PCM16 format (int16)
-        # indata shape: (frames, channels), dtype: float32
-        # Scale from [-1.0, 1.0] to int16 range
-        audio_int16 = (indata.flatten() * 32767).astype(np.int16)
-        
-        # Convert to bytes (PCM16)
-        audio_bytes = audio_int16.tobytes()
-        
-        # Put the audio chunk into the queue (thread-safe)
-        def safe_put():
-            if not queue.full():
-                queue.put_nowait(audio_bytes)
 
-        loop.call_soon_threadsafe(safe_put)
-    
-    # Create the input stream with the callback
-    with sd.InputStream(
-        samplerate=SAMPLE_RATE,
-        channels=CHANNELS,
-        dtype=np.float32,
-        blocksize=CHUNK_SAMPLES,
-        latency="low",
-        callback=callback
-    ):
-        # Keep the stream running - this is a blocking context manager
-        # The stream runs in a separate thread and uses callbacks
-        # We use a future to keep this coroutine alive
-        await asyncio.sleep(float('inf'))
+    stream = sd.InputStream(
+        samplerate=16000,
+        channels=1,
+        blocksize=1600,
+        dtype="float32",
+        callback=callback,
+    )
 
+    with stream:
+        print("Microphone stream opened")
+
+        while True:
+            await asyncio.sleep(1)
