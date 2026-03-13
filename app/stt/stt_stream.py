@@ -6,6 +6,8 @@ import asyncio
 import numpy as np
 from faster_whisper import WhisperModel
 
+print("STT module loaded")
+
 SAMPLE_RATE = 16000
 BUFFER_SECONDS = 1
 
