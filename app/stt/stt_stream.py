@@ -13,6 +13,7 @@ BUFFER_SECONDS = 1
 
 
 async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
+    print("STT engine starting...")
     """
     Continuously read audio chunks from the audio_queue and perform speech recognition.
     Recognized text is pushed to text_queue.
