@@ -1,7 +1,3 @@
-"""
-Real-time pipeline connecting capture, speech recognition, and playback.
-"""
-
 import asyncio
 
 from app.audio.capture import capture_audio
@@ -10,19 +6,22 @@ from app.stt.stt_stream import streaming_stt
 
 
 async def main():
-    """Run the full real-time pipeline."""
 
     print("Audio pipeline started...")
 
     audio_queue = asyncio.Queue(maxsize=50)
     text_queue = asyncio.Queue()
 
+    loop = asyncio.get_running_loop()
+
     await asyncio.gather(
-        capture_audio(audio_queue),
+
+        # run capture in background thread
+        loop.run_in_executor(None, capture_audio, audio_queue),
+
+        # STT task
         streaming_stt(audio_queue, text_queue),
-        playback_audio(audio_queue)
+
+        # playback task
+        playback_audio(audio_queue),
     )
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
