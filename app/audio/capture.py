@@ -23,20 +23,6 @@ async def capture_audio(audio_queue, playback_queue):
 
     loop = asyncio.get_running_loop()
 
-    def callback(indata, frames, time, status):
-        if status:
-            print(status)
-
-        audio = indata.copy()
-
-        if not audio_queue.full():
-            loop.call_soon_threadsafe(audio_queue.put_nowait, audio)
-
-        if not playback_queue.full():
-            loop.call_soon_threadsafe(playback_queue.put_nowait, audio)
-
-        print("Audio chunk captured")
-
     stream = sd.InputStream(
         samplerate=16000,
         channels=1,

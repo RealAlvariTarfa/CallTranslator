@@ -21,12 +21,12 @@ async def main():
         streaming_stt(audio_queue, text_queue)
     )
 
-    playback_task = asyncio.create_task(
-        playback_audio(playback_queue)
-    )
+    # playback_task = asyncio.create_task(
+    #     playback_audio(playback_queue)
+    # )
 
     await asyncio.gather(
         capture_task,
         stt_task,
-        playback_task,
+        # playback_task,
     )

@@ -1,34 +1,6 @@
-print("STT module imported")
-"""
-Real-time streaming speech-to-text module using faster-whisper.
-"""
-
-import asyncio
-import numpy as np
-from faster_whisper import WhisperModel
-
-print("STT module loaded")
-
-SAMPLE_RATE = 16000
-BUFFER_SECONDS = 1
-
-
 async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
 
     print("STT task started")
-
-    print("Loading Whisper model...")
-
-    model = WhisperModel("base", compute_type="int8")
-
-    print("Whisper model loaded")
-
-
-    print("STT engine starting...")
-    """
-    Continuously read audio chunks from the audio_queue and perform speech recognition.
-    Recognized text is pushed to text_queue.
-    """
 
     print("Loading Whisper model...")
 
@@ -39,34 +11,40 @@ async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
     )
 
     print("Whisper model loaded.")
+    print("STT engine starting...")
 
-    audio_buffer = np.array([], dtype=np.int16)
+    audio_buffer = []
 
     while True:
-
         audio_chunk = await audio_queue.get()
 
-        chunk_array = np.frombuffer(audio_chunk, dtype=np.int16)
+        # ✅ audio_chunk is already float32 from sounddevice
+        audio_buffer.append(audio_chunk)
 
-        audio_buffer = np.concatenate((audio_buffer, chunk_array))
+        # accumulate ~1 second
+        if len(audio_buffer) < 50:
+            continue
 
-        if len(audio_buffer) >= SAMPLE_RATE * BUFFER_SECONDS:
+        # merge chunks
+        audio_np = np.concatenate(audio_buffer, axis=0)
 
-            audio_float = audio_buffer.astype(np.float32) / 32768.0
+        # flatten to 1D
+        audio_np = audio_np.flatten()
 
-            segments, _ = model.transcribe(
-                audio_float,
-                language="en",
-                vad_filter=True
-            )
+        print("Processing audio...")
 
-            for segment in segments:
+        segments, _ = model.transcribe(
+            audio_np,
+            language="en",
+            vad_filter=True
+        )
 
-                text = segment.text.strip()
+        for segment in segments:
+            text = segment.text.strip()
 
-                if text:
-                    print(f"You said: {text}")
+            if text:
+                print(f"You said: {text}")
+                await text_queue.put(text)
 
-                    await text_queue.put(text)
-
-            audio_buffer = np.array([], dtype=np.int16)
+        # reset buffer
+        audio_buffer = []
