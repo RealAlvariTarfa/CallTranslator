@@ -1,3 +1,7 @@
+import asyncio
+import numpy as np
+from faster_whisper import WhisperModel
+
 async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
 
     print("STT task started")
