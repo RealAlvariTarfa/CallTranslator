@@ -2,54 +2,42 @@ import asyncio
 import numpy as np
 from faster_whisper import WhisperModel
 
+SAMPLE_RATE = 16000
+BUFFER_SECONDS = 1
+
+
 async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
 
     print("STT task started")
 
+    # ✅ Load model ONLY ONCE
     print("Loading Whisper model...")
-
-    model = WhisperModel(
-        "base",
-        device="cpu",
-        compute_type="int8",
-        download_root="./models"
-    )
-
+    model = WhisperModel("base", device="cpu", compute_type="int8")
     print("Whisper model loaded.")
-    print("STT engine starting...")
 
-    audio_buffer = []
+    audio_buffer = np.array([], dtype=np.float32)
 
     while True:
         audio_chunk = await audio_queue.get()
 
-        # ✅ audio_chunk is already float32 from sounddevice
-        audio_buffer.append(audio_chunk)
+        # ✅ Already float32 → DON'T convert wrongly
+        chunk_array = audio_chunk.flatten()
 
-        # accumulate ~1 second
-        if len(audio_buffer) < 50:
-            continue
+        audio_buffer = np.concatenate((audio_buffer, chunk_array))
 
-        # merge chunks
-        audio_np = np.concatenate(audio_buffer, axis=0)
+        if len(audio_buffer) >= SAMPLE_RATE * BUFFER_SECONDS:
 
-        # flatten to 1D
-        audio_np = audio_np.flatten()
+            segments, _ = model.transcribe(
+                audio_buffer,
+                language="en",
+                vad_filter=True
+            )
 
-        print("Processing audio...")
+            for segment in segments:
+                text = segment.text.strip()
+                if text:
+                    print(f"You said: {text}")
+                    await text_queue.put(text)
 
-        segments, _ = model.transcribe(
-            audio_np,
-            language="en",
-            vad_filter=True
-        )
-
-        for segment in segments:
-            text = segment.text.strip()
-
-            if text:
-                print(f"You said: {text}")
-                await text_queue.put(text)
-
-        # reset buffer
-        audio_buffer = []
+            # reset buffer
+            audio_buffer = np.array([], dtype=np.float32)
