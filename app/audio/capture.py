@@ -17,7 +17,7 @@ CHUNK_DURATION_MS = 20  # 20 ms chunks
 CHUNK_SAMPLES = int(SAMPLE_RATE * CHUNK_DURATION_MS / 1000)  # 320 samples
 
 
-async def capture_audio(queue: asyncio.Queue) -> None:
+async def capture_audio(audio_queue, playback_queue):
 
     print("Microphone capture starting...")
 
@@ -29,8 +29,11 @@ async def capture_audio(queue: asyncio.Queue) -> None:
 
         audio = indata.copy()
 
-        # Send audio safely from the audio thread to asyncio
-        loop.call_soon_threadsafe(queue.put_nowait, audio)
+        if not audio_queue.full():
+            loop.call_soon_threadsafe(audio_queue.put_nowait, audio)
+
+        if not playback_queue.full():
+            loop.call_soon_threadsafe(playback_queue.put_nowait, audio)
 
         print("Audio chunk captured")
 

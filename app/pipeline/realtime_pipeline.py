@@ -9,11 +9,12 @@ async def main():
 
     print("Audio pipeline started...")
 
-    audio_queue = asyncio.Queue(maxsize=50)
+    audio_queue = asyncio.Queue(maxsize=100)     # for STT
+    playback_queue = asyncio.Queue(maxsize=100)  # for speakers
     text_queue = asyncio.Queue()
 
     capture_task = asyncio.create_task(
-        capture_audio(audio_queue)
+        capture_audio(audio_queue, playback_queue)
     )
 
     stt_task = asyncio.create_task(
@@ -21,7 +22,7 @@ async def main():
     )
 
     playback_task = asyncio.create_task(
-        playback_audio(audio_queue)
+        playback_audio(playback_queue)
     )
 
     await asyncio.gather(
