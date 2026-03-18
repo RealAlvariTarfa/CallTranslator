@@ -11,7 +11,8 @@ async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
     model = WhisperModel(
         "base",
         device="cpu",
-        compute_type="int8"
+        compute_type="int8",
+        download_root="./models"
     )
 
     print("Whisper model loaded.")
