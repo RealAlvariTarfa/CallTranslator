@@ -17,16 +17,27 @@ CHUNK_DURATION_MS = 20  # 20 ms chunks
 CHUNK_SAMPLES = int(SAMPLE_RATE * CHUNK_DURATION_MS / 1000)  # 320 samples
 
 
-async def capture_audio(audio_queue, playback_queue):
+async def capture_audio(audio_queue):
 
     print("Microphone capture starting...")
 
     loop = asyncio.get_running_loop()
 
+    def callback(indata, frames, time, status):
+        if status:
+            print(status)
+
+        audio = indata.copy()
+
+        if not audio_queue.full():
+            loop.call_soon_threadsafe(audio_queue.put_nowait, audio)
+
+        print("Audio chunk captured")
+
     stream = sd.InputStream(
         samplerate=16000,
         channels=1,
-        blocksize=1600,
+        blocksize=320,   # ✅ 20ms chunks (IMPORTANT)
         dtype="float32",
         callback=callback,
     )

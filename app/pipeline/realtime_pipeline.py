@@ -14,7 +14,7 @@ async def main():
     text_queue = asyncio.Queue()
 
     capture_task = asyncio.create_task(
-        capture_audio(audio_queue, playback_queue)
+        capture_audio(audio_queue)
     )
 
     stt_task = asyncio.create_task(
