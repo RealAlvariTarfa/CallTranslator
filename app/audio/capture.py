@@ -29,8 +29,10 @@ async def capture_audio(audio_queue):
 
         audio = indata.copy()
 
-        if not audio_queue.full():
+        try:
             loop.call_soon_threadsafe(audio_queue.put_nowait, audio)
+        except:
+            pass
 
         print("Audio chunk captured")
 

@@ -9,7 +9,7 @@ async def main():
 
     print("Audio pipeline started...")
 
-    audio_queue = asyncio.Queue(maxsize=100)     # for STT
+    audio_queue = asyncio.Queue(maxsize=200)     # for STT
     playback_queue = asyncio.Queue(maxsize=100)  # for speakers
     text_queue = asyncio.Queue()
 
