@@ -3,7 +3,7 @@ import numpy as np
 from faster_whisper import WhisperModel
 
 SAMPLE_RATE = 16000
-BUFFER_SECONDS = 1
+BUFFER_SECONDS = 5
 
 
 async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
@@ -13,7 +13,7 @@ async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
     # ✅ Load model ONLY ONCE
     print("Loading Whisper model...")
     model = WhisperModel(
-        "base",
+        "small",
         device="cpu",
         compute_type="int8"
     )
@@ -34,7 +34,9 @@ async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
             segments, _ = model.transcribe(
                 audio_buffer,
                 language="en",
-                vad_filter=True
+                vad_filter=True,
+                beam_size=5,
+                initial_prompt="This is a simple conversation with short phrases like hello, testing one two."
             )
 
             for segment in segments:
