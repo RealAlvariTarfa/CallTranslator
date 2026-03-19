@@ -30,11 +30,11 @@ async def capture_audio(audio_queue):
         audio = indata.copy()
 
         try:
-            loop.call_soon_threadsafe(audio_queue.put_nowait, audio)
-        except:
-            pass
+            audio_queue.put_nowait(indata.copy())
+        except asyncio.QueueFull:
+            pass  # drop audio instead of crashing
 
-        print("Audio chunk captured")
+        # print("Audio chunk captured")
 
     stream = sd.InputStream(
         samplerate=16000,

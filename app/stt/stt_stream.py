@@ -12,7 +12,11 @@ async def streaming_stt(audio_queue: asyncio.Queue, text_queue: asyncio.Queue):
 
     # ✅ Load model ONLY ONCE
     print("Loading Whisper model...")
-    model = WhisperModel("base", device="cpu", compute_type="int8")
+    model = WhisperModel(
+        "base",
+        device="cpu",
+        compute_type="int8"
+    )
     print("Whisper model loaded.")
 
     audio_buffer = np.array([], dtype=np.float32)
